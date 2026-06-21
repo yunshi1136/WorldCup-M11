@@ -2,43 +2,40 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>M11 自动预测（真实API版）</title>
+<title>M11 自动预测系统（真实API版）</title>
 <style>
-  body { font-family: Arial; background: #f5f5f5; padding: 20px; }
-  .card {
-    background: white; padding: 15px; margin-bottom: 15px;
-    border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-  .title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-  .teams { font-size: 16px; margin-bottom: 10px; }
-  .result { font-size: 16px; color: #007bff; font-weight: bold; }
+body { font-family: Arial; background: #f5f5f5; padding: 20px; }
+.card {
+  background: white; padding: 15px; margin-bottom: 15px;
+  border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+.teams { font-size: 16px; margin-bottom: 10px; }
+.result { font-size: 16px; color: #007bff; font-weight: bold; }
 </style>
 </head>
-
 <body>
 <h2>M11 自动预测系统（真实API版）</h2>
-
 <div id="match-list">正在加载真实比赛数据...</div>
 
 <script>
-// ① 把你的 API Key 填在这里
+// 你的 API Key（记得换成你自己的）
 const API_KEY = "c2e12769208838d3acb049d0d56c6fdf";
 
-// ② 获取今天的真实比赛（你可以改日期）
+// 获取今天日期（自动）
+const today = new Date().toISOString().split("T")[0];
+
+// 获取真实比赛
 async function loadMatches() {
-  const url = "https://v3.football.api-sports.io/fixtures?date=2024-06-21";
-
+  const url = `https://v3.football.api-sports.io/fixtures?date=${today}`;
   const res = await fetch(url, {
-    headers: {
-      "x-apisports-key": API_KEY
-    }
+    headers: { "x-apisports-key": API_KEY }
   });
-
   const data = await res.json();
   return data.response;
 }
 
-// ③ 简单预测逻辑（我帮你写好了）
+// 简单预测逻辑
 function predict() {
   const r = Math.random();
   if (r < 0.4) return "主胜";
@@ -46,7 +43,7 @@ function predict() {
   return "客胜";
 }
 
-// ④ 自动渲染卡片
+// 渲染比赛卡片
 async function render() {
   const container = document.getElementById("match-list");
   container.innerHTML = "";
@@ -62,8 +59,7 @@ async function render() {
     card.className = "card";
     card.innerHTML = `
       <div class="title">${home} vs ${away}</div>
-      <div class="teams">真实比赛：${home} 对 ${away}</div>
-      <div class="result">预测结果：${result}</div>
+      <div class="teams">预测结果: ${result}</div>
     `;
     container.appendChild(card);
   });
@@ -71,6 +67,5 @@ async function render() {
 
 render();
 </script>
-
 </body>
 </html>

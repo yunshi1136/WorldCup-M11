@@ -1,77 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>世界杯M11预测助手</title>
-
+<meta charset="UTF-8">
+<title>M11 自动预测（真实API版）</title>
 <style>
-body{
-background:#0f172a;
-color:white;
-font-family:Arial;
-padding:20px;
-}
-
-.card{
-background:#1e293b;
-padding:15px;
-margin:10px 0;
-border-radius:10px;
-}
-
-button{
-width:100%;
-padding:12px;
-margin-top:10px;
-background:#2563eb;
-color:white;
-border:none;
-border-radius:8px;
-font-size:18px;
-}
-
-h1{
-text-align:center;
-}
-
-.result{
-margin-top:15px;
-font-size:18px;
-color:#22c55e;
-}
+  body { font-family: Arial; background: #f5f5f5; padding: 20px; }
+  .card {
+    background: white; padding: 15px; margin-bottom: 15px;
+    border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+  .teams { font-size: 16px; margin-bottom: 10px; }
+  .result { font-size: 16px; color: #007bff; font-weight: bold; }
 </style>
 </head>
 
 <body>
+<h2>M11 自动预测系统（真实API版）</h2>
 
-<h1>⚽ 世界杯M11预测助手</h1>
-
-<div class="card">
-<h3>今日推荐</h3>
-<p>德国 VS 库拉索</p>
-<button onclick="predict1()">查看预测</button>
-<div id="r1" class="result"></div>
-</div>
-
-<div class="card">
-<h3>今日二串一</h3>
-<button onclick="predict2()">查看方案</button>
-<div id="r2" class="result"></div>
-</div>
+<div id="match-list">正在加载真实比赛数据...</div>
 
 <script>
+// ① 把你的 API Key 填在这里
+const API_KEY = "c2e12769208838d3acb049d0d56c6fdf";
 
-function predict1(){
-document.getElementById("r1").innerHTML=
-"主胜概率72%<br>推荐：德国胜";
+// ② 获取今天的真实比赛（你可以改日期）
+async function loadMatches() {
+  const url = "https://v3.football.api-sports.io/fixtures?date=2024-06-21";
+
+  const res = await fetch(url, {
+    headers: {
+      "x-apisports-key": API_KEY
+    }
+  });
+
+  const data = await res.json();
+  return data.response;
 }
 
-function predict2(){
-document.getElementById("r2").innerHTML=
-"德国胜 + 荷兰不败";
+// ③ 简单预测逻辑（我帮你写好了）
+function predict() {
+  const r = Math.random();
+  if (r < 0.4) return "主胜";
+  if (r < 0.7) return "平局";
+  return "客胜";
 }
 
+// ④ 自动渲染卡片
+async function render() {
+  const container = document.getElementById("match-list");
+  container.innerHTML = "";
+
+  const matches = await loadMatches();
+
+  matches.forEach(m => {
+    const home = m.teams.home.name;
+    const away = m.teams.away.name;
+    const result = predict();
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${home} vs ${away}</div>
+      <div class="teams">真实比赛：${home} 对 ${away}</div>
+      <div class="result">预测结果：${result}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+render();
 </script>
 
 </body>

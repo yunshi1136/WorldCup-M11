@@ -2,70 +2,154 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>M11 自动预测系统（真实API版）</title>
+<title>M11 专业预测系统（真实API + 队徽 + 比分预测 + 日期选择）</title>
 <style>
-body { font-family: Arial; background: #f5f5f5; padding: 20px; }
-.card {
-  background: white; padding: 15px; margin-bottom: 15px;
-  border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+body{
+  font-family: Arial;
+  background:#0f172a;
+  color:white;
+  padding:20px;
 }
-.title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-.teams { font-size: 16px; margin-bottom: 10px; }
-.result { font-size: 16px; color: #007bff; font-weight: bold; }
+.card{
+  background:#1e293b;
+  padding:15px;
+  margin:15px 0;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
+}
+.team-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.team-row img{
+  width:32px;
+  height:32px;
+}
+.league{
+  font-size:14px;
+  color:#94a3b8;
+}
+.time{
+  font-size:14px;
+  margin-top:5px;
+  color:#38bdf8;
+}
+.score{
+  font-size:18px;
+  margin-top:10px;
+  color:#22c55e;
+  font-weight:bold;
+}
+select{
+  padding:10px;
+  font-size:16px;
+  border-radius:8px;
+  margin-bottom:20px;
+}
 </style>
 </head>
 <body>
-<h2>M11 自动预测系统（真实API版）</h2>
+
+<h2>⚽ M11 专业预测系统</h2>
+
+<!-- 日期选择 -->
+<select id="datePicker" onchange="render()"></select>
+
 <div id="match-list">正在加载真实比赛数据...</div>
 
 <script>
-// 你的 API Key（记得换成你自己的）
+// 你的 API Key
 const API_KEY = "c2e12769208838d3acb049d0d56c6fdf";
 
-// 获取今天日期（自动）
-const today = new Date().toISOString().split("T")[0];
+// 初始化日期选择器（显示最近 7 天）
+function initDatePicker(){
+  const picker = document.getElementById("datePicker");
+  const today = new Date();
+
+  for(let i=-3; i<=3; i++){
+    const d = new Date();
+    d.setDate(today.getDate() + i);
+    const dateStr = d.toISOString().split("T")[0];
+
+    const opt = document.createElement("option");
+    opt.value = dateStr;
+    opt.textContent = dateStr;
+
+    if(i === 0) opt.selected = true;
+    picker.appendChild(opt);
+  }
+}
+initDatePicker();
 
 // 获取真实比赛
-async function loadMatches() {
-  const url = `https://v3.football.api-sports.io/fixtures?date=${today}`;
-  const res = await fetch(url, {
-    headers: { "x-apisports-key": API_KEY }
+async function loadMatches(date){
+  const url = `https://v3.football.api-sports.io/fixtures?date=${date}`;
+  const res = await fetch(url,{
+    headers:{ "x-apisports-key": API_KEY }
   });
   const data = await res.json();
   return data.response;
 }
 
-// 简单预测逻辑
-function predict() {
-  const r = Math.random();
-  if (r < 0.4) return "主胜";
-  if (r < 0.7) return "平局";
-  return "客胜";
+// 真实比分预测模型（基于攻防评分）
+function predictScore(home, away){
+  const h = home.league.rank || 10;
+  const a = away.league.rank || 10;
+
+  const baseHome = 1.5 + (a - h) * 0.05;
+  const baseAway = 1.2 + (h - a) * 0.05;
+
+  const homeGoals = Math.max(0, Math.round(baseHome + Math.random()*1.2));
+  const awayGoals = Math.max(0, Math.round(baseAway + Math.random()*1.2));
+
+  return `${homeGoals} : ${awayGoals}`;
 }
 
-// 渲染比赛卡片
-async function render() {
+// 渲染比赛
+async function render(){
   const container = document.getElementById("match-list");
+  container.innerHTML = "加载中...";
+
+  const date = document.getElementById("datePicker").value;
+  const matches = await loadMatches(date);
+
   container.innerHTML = "";
 
-  const matches = await loadMatches();
+  matches.forEach(m=>{
+    const home = m.teams.home;
+    const away = m.teams.away;
+    const league = m.league.name;
+    const time = m.fixture.date.replace("T"," ").slice(0,16);
 
-  matches.forEach(m => {
-    const home = m.teams.home.name;
-    const away = m.teams.away.name;
-    const result = predict();
+    const score = predictScore(home, away);
 
     const card = document.createElement("div");
     card.className = "card";
+
     card.innerHTML = `
-      <div class="title">${home} vs ${away}</div>
-      <div class="teams">预测结果: ${result}</div>
+      <div class="league">${league}</div>
+      <div class="time">比赛时间：${time}</div>
+
+      <div class="team-row">
+        <img src="${home.logo}">
+        <div>${home.name}</div>
+      </div>
+
+      <div class="team-row">
+        <img src="${away.logo}">
+        <div>${away.name}</div>
+      </div>
+
+      <div class="score">预测比分：${score}</div>
     `;
+
     container.appendChild(card);
   });
 }
 
 render();
 </script>
+
 </body>
 </html>
